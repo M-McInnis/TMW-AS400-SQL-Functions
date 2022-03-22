@@ -1,0 +1,32 @@
+USE ---INSERT DATABASE NAME HERE---
+GO
+
+DROP FUNCTION OF EXISTS [dbo].[fnBusinessDay]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:      Marshall McInnis
+-- Create date: 1/23/2019
+-- Description:	Converts date to business day
+-- =============================================
+
+CREATE FUNCTION [dbo].[fnBusinessDay] (@dtDate DATE)
+RETURNS BIT
+AS
+BEGIN
+
+    RETURN CASE DATEPART(WEEKDAY, @dtDate)
+                WHEN 1 THEN CONVERT(BIT, 0)
+                WHEN 7 THEN CONVERT(BIT, 0)
+                ELSE CONVERT(BIT, 1) END;
+
+END;
+GO
+
+
