@@ -1,0 +1,57 @@
+USE ---INSERT DATABASE NAME HERE---
+GO
+
+DROP FUNCTION [dbo].[fnAS400Month]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Marshall McInnis
+-- Create date: 3/31/2021
+-- Description:	Converts AS400 Date
+-- =============================================
+
+CREATE FUNCTION [dbo].[fnAS400Month] (@d1 INT)
+RETURNS DATE
+AS
+BEGIN
+    DECLARE @d2 VARCHAR(7);
+    DECLARE @day INT;
+    DECLARE @yr INT;
+    DECLARE @vyr VARCHAR(10);
+
+    SET @d2 = CONVERT(VARCHAR(50), @d1);
+
+    IF LEN(@d2) <> 7
+        RETURN '1899-12-30';
+
+    SET @day = CONVERT(INT, RIGHT(@d2, 3));
+    SET @yr = CONVERT(INT, LEFT(@d2, 4)) - 1;
+    SET @vyr = '12/31/' + CONVERT(VARCHAR(4), @yr);
+
+    RETURN CONVERT(
+               [DATE],
+               (CONVERT(
+                    [VARCHAR](10),
+                    DATEPART(
+                        MONTH,
+                        DATEADD(
+                            WEEK, DATEDIFF(WEEK, (0), DATEADD(DAY, (-1), DATEADD(DAY, @day, CONVERT(DATE, @vyr)))), (0))),
+                    (0)) + '/1/')
+               + CONVERT(
+                     [VARCHAR](10),
+                     DATEPART(
+                         YEAR,
+                         DATEADD(
+                             WEEK,
+                             DATEDIFF(WEEK, (0), DATEADD(DAY, (-1), DATEADD(DAY, @day, CONVERT(DATE, @vyr)))),
+                             (0))),
+                     (0)),
+               (0));
+END;
+GO
