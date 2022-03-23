@@ -1,0 +1,34 @@
+USE ---[DATABASE NAME]---
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[fnConvertTime]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author: Marshall McInnis
+-- Create date: 04/26/2021
+-- Description:	Converts time from AS400 to HHMM format.  
+-- Input will be HHMMSS, where all seconds are 0 and all preciding zeros are dropped
+-- =============================================
+
+CREATE FUNCTION [dbo].[fnConvertTime] (@inputTime AS VARCHAR(6) = NULL)
+RETURNS CHAR(5)
+AS
+BEGIN
+
+    IF @inputTime IS NULL
+    OR @inputTime = 'NULL'
+    OR @inputTime = 0
+        RETURN NULL;
+
+    Declare @outputTime AS CHAR(4) = RIGHT('0000' + LEFT(@inputTime, LEN(@inputTime) - 2), 4);
+    return LEFT(@outputTime, 2) + ':' + RIGHT(@outputTime, 2)
+
+END;
+GO
