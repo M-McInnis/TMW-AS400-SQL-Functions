@@ -1,0 +1,64 @@
+USE ---[DATABASE NAME]---
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[fnConvertDateTime]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Marshall McInnis
+-- Create date: 03/30/2020
+-- Description:	Converts time & time from AS400 to standard date/time format.  
+-- =============================================
+
+CREATE FUNCTION [dbo].[fnConvertDateTime] (
+    @inputDate AS VARCHAR(50) = NULL,
+    @inputTime AS VARCHAR(15) = NULL)
+RETURNS DATETIME
+AS
+BEGIN
+
+    DECLARE @outputDate AS VARCHAR(15);
+    DECLARE @outputTime AS VARCHAR(15);
+    DECLARE @dtRet AS DATETIME;
+
+    /*   DATE   */
+
+    IF @inputDate IS NULL
+    OR @inputDate = ''
+    OR @inputDate = '0'
+    OR LEN(LTRIM(RTRIM(@inputDate))) <> 7
+        SET @outputDate = NULL; --'01/01/1990';
+    ELSE
+        SET @outputDate
+            = CONVERT(
+                  VARCHAR(50),
+                  DATEADD(DAY, CAST(RIGHT(@inputDate, 3) AS INT) - 1, CAST(LEFT(@inputDate, 4) + '0101' AS DATE)),
+                  101);
+
+    /*   TIME  */
+
+    SET @inputTime = LTRIM(RTRIM(REPLACE(@inputTime, ':', '')));
+
+    IF @inputTime IS NULL
+    OR @inputTime = 'NULL'
+    OR @inputTime = ''
+    OR @inputTime = '2400'
+        SET @inputTime = '0000';
+
+    SET @outputTime = RIGHT('0000' + @inputTime, 4);
+    SET @outputTime = ' ' + LEFT(@outputTime, 2) + ':' + RIGHT(@outputTime, 2);
+
+    SET @dtRet = CONVERT(DATETIME, @outputDate + @outputTime);
+    --RETURN @outputDate + '|' + @outputTime + '|' + @inputTime;
+
+    RETURN @dtRet;
+
+END;
+GO
+
