@@ -1,0 +1,48 @@
+USE --[DATABASE NAME]---
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[fnConvertTimeStamp]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author: Marshall McInnis
+-- Create date: 08/28/2021
+-- Description:	Converts date and time from YYYYMMDD and HHNNSS
+-- =============================================
+
+CREATE FUNCTION [dbo].[fnConvertTimeStamp] (
+    @inputDate AS VARCHAR(50) = NULL,
+    @inputTime AS VARCHAR(15) = NULL)
+RETURNS DATETIME
+AS
+BEGIN
+    DECLARE @outputDate AS VARCHAR(15);
+    DECLARE @outputTime AS VARCHAR(15);
+    DECLARE @dtRet AS DATETIME;
+
+    /*   DATE   */
+    IF @inputDate IS NULL
+    OR LEN(@inputDate) <> 8
+        RETURN NULL;
+
+    IF @inputTime IS NULL
+    OR LEN(@inputTime) > 6
+        SET @inputTime = '000000';
+
+    WHILE LEN(@inputTime) < 6
+    BEGIN
+        SET @inputTime = '0' + @inputTime;
+    END;
+
+    SET @outputDate = LEFT(@inputDate, 4) + '-' + SUBSTRING(@inputDate, 5, 2) + '-' + RIGHT(@inputDate, 2);
+    SET @outputTime = ' ' + LEFT(@inputTime, 2) + ':' + SUBSTRING(@inputTime, 3, 2) + ':' + RIGHT(@inputTime, 2);
+
+    RETURN CONVERT(DATETIME, @outputDate + @outputTime)
+END;
+GO
