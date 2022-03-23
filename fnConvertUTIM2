@@ -1,0 +1,49 @@
+USE ---[DATABASE NAME]---
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[fnConvertUTIM2]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Marshall McInnis
+-- Create date: 06/15/2021
+-- Description:	Takes a date/time in the format of yyyy-mm-dd-hh.nn.ss.msssss and returns a date/time. 
+-- =============================================
+
+CREATE FUNCTION [dbo].[fnConvertUTIM2] (
+    -- Add the parameters for the function here
+    @UTIMD AS INT,
+    @UTIMT AS INT)
+RETURNS DATETIME
+AS
+BEGIN
+    -- Declare the return variable here
+    DECLARE @UTIMS VARCHAR(50);
+
+    SET @UTIMS = CONVERT(VARCHAR(8), @UTIMD) + CONVERT(VARCHAR(6), @UTIMT);
+
+    IF LEN(@UTIMS) = 12
+    BEGIN
+        SET @UTIMS
+            = LEFT(@UTIMS, 4) + '-' + SUBSTRING(@UTIMS, 5, 2) + '-' + SUBSTRING(@UTIMS, 7, 2) + ' '
+              + SUBSTRING(@UTIMS, 9, 2) + ':' + SUBSTRING(@UTIMS, 11, 2);
+    END;
+    ELSE IF LEN(@UTIMS) = 14
+    BEGIN
+        SET @UTIMS
+            = LEFT(@UTIMS, 4) + '-' + SUBSTRING(@UTIMS, 5, 2) + '-' + SUBSTRING(@UTIMS, 7, 2) + ' '
+              + SUBSTRING(@UTIMS, 9, 2) + ':' + SUBSTRING(@UTIMS, 11, 2) + ':' + SUBSTRING(@UTIMS, 13, 2);
+    END;
+    ELSE
+        RETURN NULL;
+
+    -- Return the result of the function
+    RETURN CONVERT(DATETIME, @UTIMS);
+END;
+GO
