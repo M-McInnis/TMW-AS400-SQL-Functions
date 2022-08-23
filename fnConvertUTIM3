@@ -1,0 +1,85 @@
+USE [insert database name here]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[fnConvertUTIM3]    Script Date: 8/23/2022 9:47:11 AM ******/
+DROP FUNCTION IF EXISTS [dbo].[fnConvertUTIM3]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[fnConvertUTIM3]    Script Date: 8/23/2022 9:47:12 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Marshall McInnis
+-- Create date: 08/23/2022
+-- Description:	Takes date/time parameters and return datetime
+--	Date is expected in xyymmdd format.
+--	x will be 0 for 19, 1 for 20, etc
+--	Time is expected in hhmmss or hhmm format.
+-- =============================================
+CREATE FUNCTION [dbo].[fnConvertUTIM3]
+(
+    @UTIMD AS VARCHAR(8),
+    @UTIMT AS VARCHAR(6)
+)
+RETURNS DATETIME
+AS
+    BEGIN
+
+        -- Declare the return variable here
+        DECLARE @UTIMS VARCHAR(50);
+        DECLARE @UTIMDD CHAR(1);
+
+        SET @UTIMT = REPLACE (@UTIMT, ':', '');
+
+        IF TRY_CAST(@UTIMT AS INT) = 0 OR
+           @UTIMT IS NULL
+            SET @UTIMT = '000001';
+
+        IF @UTIMT = '0070'
+            SET @UTIMT = '0110'; --Can't fix consistently stupid
+
+        IF @UTIMT = '2400' OR
+           @UTIMT = '240000'
+            SET @UTIMT = '235900';
+
+        SET @UTIMDD = LEFT(@UTIMD, 1);
+        SET @UTIMD = RIGHT(@UTIMD, LEN (@UTIMD) - 1);
+        SET @UTIMD = CASE @UTIMDD
+                         WHEN '0' THEN
+                             '19'
+                         WHEN '1' THEN
+                             '20'
+                         WHEN '2' THEN
+                             '21'
+                         ELSE
+                             '20'
+                     END + @UTIMD;
+
+        SET @UTIMS = CONVERT (VARCHAR(8), @UTIMD) + CONVERT (VARCHAR(6), @UTIMT);
+
+        IF LEN (@UTIMS) = 12
+            BEGIN
+                SET @UTIMS
+                    = LEFT(@UTIMS, 4) + '-' + SUBSTRING (@UTIMS, 5, 2) + '-' + SUBSTRING (@UTIMS, 7, 2) + ' '
+                      + SUBSTRING (@UTIMS, 9, 2) + ':' + SUBSTRING (@UTIMS, 11, 2);
+            END;
+        ELSE IF LEN (@UTIMS) = 14
+            BEGIN
+                SET @UTIMS
+                    = LEFT(@UTIMS, 4) + '-' + SUBSTRING (@UTIMS, 5, 2) + '-' + SUBSTRING (@UTIMS, 7, 2) + ' '
+                      + SUBSTRING (@UTIMS, 9, 2) + ':' + SUBSTRING (@UTIMS, 11, 2) + ':' + SUBSTRING (@UTIMS, 13, 2);
+            END;
+        ELSE
+            RETURN NULL;
+
+        -- Return the result of the function
+        RETURN TRY_CAST(@UTIMS AS DATETIME);
+
+    END;
+GO
+
+
